@@ -40,7 +40,6 @@ public partial class SettingsWindow : Window
         LanguageCard.Visibility = GameLanguage.Items.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
         (settings.FreeAreaTarget switch { ResultTarget.Pc => FreePc, ResultTarget.Both => FreeBoth, _ => FreeTv }).IsChecked = true;
         Region.Frame = controller.LastFrame;
-        ObsAddress.Text = $"http://localhost:{controller.ServerPort}/obs";
         ShowArea(0);
         // Num 8: oyunun o anki görüntüsü önizlemeye alınır.
         controller.SnapshotRequested += OnSnapshot;
@@ -67,6 +66,9 @@ public partial class SettingsWindow : Window
         DeepLStatus.Visibility = Visibility.Visible;
         DeepLStatus.Text = check.State switch
         {
+            OnlineKeyState.Valid when check.Limit == 0 => Localizer.Current.Language == "tr"
+                ? "Anahtar kabul edildi. Çeviri bu anahtarla yapılacak."
+                : "Key accepted. Translations will use this key.",
             OnlineKeyState.Valid => Localizer.Current.Format("This month: %1$@ of %2$@ characters used.",
                 check.Used.ToString("N0"), check.Limit.ToString("N0")),
             OnlineKeyState.QuotaExceeded => Localizer.Current["This month's DeepL limit is used up. Until it renews, the translation model on this computer translates."],
@@ -241,14 +243,4 @@ public partial class SettingsWindow : Window
     }
 
     private void OnDone(object sender, RoutedEventArgs e) => Close();
-
-    private void OnObsCopy(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            Clipboard.SetText(ObsAddress.Text);
-            ObsCopy.Content = Localizer.Current["Copied"];
-        }
-        catch (System.Runtime.InteropServices.COMException) { }
-    }
 }

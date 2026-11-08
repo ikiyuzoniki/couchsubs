@@ -18,9 +18,15 @@ public sealed class LiveServices : IAppServices
 {
     public ITranslationModel Translation { get; } = new MarianModel();
 
-    public ITextTranslator? MakeOnlineTranslator(string key, ITextTranslator? fallback) => new DeepLTranslator(key, fallback);
+    // Anahtarın biçimi servisi belirler: "AIza…" Gemini, "sk-…" OpenAI, diğerleri DeepL.
+    public ITextTranslator? MakeOnlineTranslator(string key, ITextTranslator? fallback)
+    {
+        if (AiTranslator.Detect(key) is { } provider) return new AiTranslator(key, provider, fallback);
+        return new DeepLTranslator(key, fallback);
+    }
 
-    public Task<OnlineKeyCheck> CheckOnlineKeyAsync(string key) => DeepLTranslator.CheckAsync(key);
+    public Task<OnlineKeyCheck> CheckOnlineKeyAsync(string key) =>
+        AiTranslator.Detect(key) is { } provider ? AiTranslator.CheckAsync(key, provider) : DeepLTranslator.CheckAsync(key);
     public IDubbingModel? Dubbing { get; } = PocketDubbingModel.EngineBundled ? new PocketDubbingModel() : null;
     public IDubbingModel? FastDubbing { get; } = WindowsVoiceModel.Available ? new WindowsVoiceModel() : null;
     public IAudioOutput? Audio { get; } = new WindowsAudioOutput();
